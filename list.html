@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PROJECT HUB — Projects</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- GSAP: 카드 슬라이더의 무한 스크롤 트윈을 담당 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<style>
+  :root{
+    --bg: #05070a;
+    --bg-deep: #020305;
+    --accent: #2ea9ff;
+    --accent-strong: #6fd7ff;
+    --secondary: #6b7684;
+    --text: #e8ecf1;
+    --card-bg: #0a0f16;
+    --card-border: rgba(46,169,255,0.22);
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+
+  html, body{
+    width:100%;
+    min-height:100%;
+    background: var(--bg);
+  }
+
+  body{
+    position:relative;
+    font-family:'Rajdhani', sans-serif;
+    color: var(--text);
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+
+  /* ===== 배경 (index.html과 톤을 맞춘 다크 그라디언트 + 노이즈 + 비네트) ===== */
+  .backdrop{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    background: radial-gradient(ellipse at 50% 0%, #0c1420 0%, var(--bg) 55%, var(--bg-deep) 100%);
+  }
+  .noise{
+    position:fixed;
+    inset:-20%;
+    z-index:0;
+    width:140%;
+    height:140%;
+    pointer-events:none;
+    opacity:0.05;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    background-repeat: repeat;
+  }
+  .vignette{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    pointer-events:none;
+    background: radial-gradient(ellipse at 50% 50%, transparent 45%, rgba(0,0,0,0.6) 100%);
+  }
+
+  /* ===== 상단 헤더 ===== */
+  .topbar{
+    position:relative;
+    z-index:5;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding: 28px 40px;
+  }
+  .back-link{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    font-size:0.85rem;
+    font-weight:600;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color: var(--secondary);
+    text-decoration:none;
+    transition: color 0.2s ease, text-shadow 0.2s ease;
+  }
+  .back-link:hover{
+    color: var(--accent-strong);
+    text-shadow: 0 0 10px rgba(46,169,255,0.6);
+  }
+  .brand{
+    font-family:'Orbitron', sans-serif;
+    font-size:0.85rem;
+    font-weight:700;
+    letter-spacing:0.3em;
+    color: var(--secondary);
+  }
+  .brand span{ color: var(--accent-strong); }
+
+  /* ===== 페이지 타이틀 영역 ===== */
+  .page-head{
+    position:relative;
+    z-index:5;
+    text-align:center;
+    padding: 10px 24px 8px;
+  }
+  .page-eyebrow{
+    font-size:0.78rem;
+    font-weight:600;
+    letter-spacing:0.5em;
+    color: var(--secondary);
+    text-transform:uppercase;
+  }
+  .page-eyebrow::before{ content:"// "; color: var(--accent); }
+  .page-title{
+    margin-top:14px;
+    font-family:'Orbitron', sans-serif;
+    font-weight:900;
+    font-size: clamp(1.6rem, 4.5vw, 3rem);
+    letter-spacing:0.05em;
+    text-shadow: 0 0 22px rgba(46,169,255,0.22);
+  }
+  .page-sub{
+    margin-top:12px;
+    font-size:0.95rem;
+    color: var(--secondary);
+    letter-spacing:0.03em;
+  }
+
+  /* ===== 슬라이더 영역 ===== */
+  .slider-section{
+    position:relative;
+    z-index:5;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:28px;
+    padding: 40px 0 60px;
+  }
+
+  /* 뷰포트: overflow hidden + 좌우 가장자리를 페이드아웃시키는 마스크 */
+  /* 카드는 기본적으로 정지해 있고, 사용자가 드래그하거나 버튼을 눌러야만 움직인다 */
+  .slider-viewport{
+    overflow:hidden;
+    width:100%;
+    cursor: grab;
+    touch-action: none; /* 브라우저 기본 스와이프/스크롤과 충돌하지 않도록 직접 드래그를 처리 */
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%);
+  }
+  .slider-viewport.dragging{ cursor: grabbing; }
+
+  /* 트랙: JS가 카드 목록을 두 번 렌더링해서 채워 넣는 컨테이너. 드래그/버튼 조작 시에만 GSAP이 이 요소를 이동시킨다 */
+  .slider-track{
+    display:flex;
+    align-items:stretch;
+    gap: 24px;
+    width: max-content;
+    padding: 6px 12px;
+    will-change: transform;
+    user-select: none; /* 드래그 중 텍스트가 선택되는 것을 방지 */
+  }
+
+  /* ===== 프로젝트 카드 ===== */
+  .project-card{
+    position:relative;
+    flex: 0 0 auto;
+    width: 280px;
+    min-height: 340px;
+    padding: 26px 24px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    background: linear-gradient(160deg, var(--card-bg) 0%, #060a10 100%);
+    border: 1px solid var(--card-border);
+    text-decoration:none;
+    color: var(--text);
+    cursor:pointer;
+    overflow:hidden;
+    transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.35s ease;
+  }
+
+  /* 카드 안을 채우는 대각선 해치 패턴 (콘텐츠 없는 상태를 "의도된 빈 화면"처럼 보이게 함) */
+  .project-card::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background: repeating-linear-gradient(
+      135deg,
+      rgba(46,169,255,0.05) 0px,
+      rgba(46,169,255,0.05) 1px,
+      transparent 1px,
+      transparent 14px
+    );
+    pointer-events:none;
+  }
+
+  /* hover 시 네온 글로우 확산 (DESIGN.md 4번 규칙) */
+  .project-card:hover{
+    transform: translateY(-8px);
+    border-color: var(--accent-strong);
+    box-shadow:
+      0 0 18px rgba(46,169,255,0.35),
+      0 18px 40px rgba(0,0,0,0.45),
+      inset 0 0 22px rgba(46,169,255,0.10);
+  }
+
+  /* 카드 모서리 브래킷 장식 (index.html의 ENTER 버튼과 동일 톤) */
+  .project-card .corner{
+    position:absolute;
+    width:12px; height:12px;
+    border: 1px solid var(--accent);
+    opacity:0.5;
+    transition: opacity 0.3s ease;
+  }
+  .project-card:hover .corner{ opacity:1; }
+  .corner.tl{ top:10px; left:10px; border-right:none; border-bottom:none; }
+  .corner.br{ bottom:10px; right:10px; border-left:none; border-top:none; }
+
+  .card-index{
+    position:relative;
+    font-family:'Orbitron', sans-serif;
+    font-size:3.2rem;
+    font-weight:900;
+    line-height:1;
+    color: rgba(232,236,241,0.06);
+    -webkit-text-stroke: 1px rgba(46,169,255,0.25);
+  }
+
+  .card-body{ position:relative; margin-top:10px; }
+  .card-title{
+    font-family:'Orbitron', sans-serif;
+    font-size:1.15rem;
+    font-weight:700;
+    letter-spacing:0.06em;
+  }
+  .card-desc{
+    margin-top:10px;
+    font-size:0.85rem;
+    color: var(--secondary);
+    letter-spacing:0.02em;
+    line-height:1.5;
+  }
+
+  .card-footer{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-top:20px;
+  }
+  .card-badge{
+    display:inline-block;
+    padding:6px 12px;
+    font-size:0.68rem;
+    font-weight:700;
+    letter-spacing:0.16em;
+    text-transform:uppercase;
+    color: var(--accent-strong);
+    border: 1px solid rgba(46,169,255,0.4);
+    background: rgba(46,169,255,0.06);
+  }
+  .card-status{
+    font-size:0.68rem;
+    letter-spacing:0.1em;
+    color: var(--secondary);
+  }
+  .card-status .dot{
+    display:inline-block;
+    width:5px; height:5px;
+    margin-right:6px;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent);
+  }
+
+  /* ===== 이전/다음 컨트롤 ===== */
+  .slider-controls{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:18px;
+  }
+  .ctrl-btn{
+    width:42px; height:42px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: rgba(46,169,255,0.04);
+    border: 1px solid rgba(46,169,255,0.4);
+    color: var(--accent-strong);
+    font-size:1.1rem;
+    cursor:pointer;
+    transition: background 0.2s ease, box-shadow 0.25s ease, color 0.2s ease;
+  }
+  .ctrl-btn:hover{
+    color:#fff;
+    background: rgba(46,169,255,0.12);
+    box-shadow: 0 0 14px rgba(46,169,255,0.5);
+  }
+  .ctrl-hint{
+    font-size:0.72rem;
+    letter-spacing:0.14em;
+    color: var(--secondary);
+    text-transform:uppercase;
+  }
+
+  @media (max-width: 640px){
+    .topbar{ padding: 22px 20px; }
+    .project-card{ width: 220px; min-height: 300px; padding: 20px 18px; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="backdrop"></div>
+  <div class="noise"></div>
+  <div class="vignette"></div>
+
+  <!-- 상단 바: 인트로로 돌아가기 + 브랜드 로고 -->
+  <header class="topbar">
+    <a href="index.html" class="back-link">&#8592; Back</a>
+    <span class="brand">PROJECT<span>_</span>HUB</span>
+  </header>
+
+  <!-- 페이지 타이틀 -->
+  <section class="page-head">
+    <p class="page-eyebrow">Archive Index</p>
+    <h1 class="page-title">SELECT A PROJECT</h1>
+    <p class="page-sub">01 — 08 · 전체 프로젝트 콘텐츠는 준비 중입니다 (Coming Soon)</p>
+  </section>
+
+  <!-- 카드 슬라이더 -->
+  <section class="slider-section">
+    <div class="slider-viewport" id="sliderViewport">
+      <div class="slider-track" id="sliderTrack">
+        <!-- 카드는 JS가 동적으로 렌더링(원본 8개 + 이음새 없는 루프를 위한 복제 8개) -->
+      </div>
+    </div>
+
+    <div class="slider-controls">
+      <button class="ctrl-btn" id="prevBtn" aria-label="이전 카드">&#8592;</button>
+      <span class="ctrl-hint">Drag to Browse</span>
+      <button class="ctrl-btn" id="nextBtn" aria-label="다음 카드">&#8594;</button>
+    </div>
+  </section>
+
+<script>
+  (function(){
+    // ============================================================
+    // 1) 카드 데이터 생성 (현재는 콘텐츠 없이 틀만 구성 — PRD 3번)
+    //    추후 실제 프로젝트 데이터가 준비되면 이 배열만 교체하면 된다.
+    // ============================================================
+    var projects = Array.from({ length: 8 }, function(_, i){
+      var num = i + 1;
+      return {
+        id: num,
+        index: String(num).padStart(2, '0'),
+        title: 'PROJECT ' + String(num).padStart(2, '0')
+      };
+    });
+
+    // 카드 하나의 마크업을 문자열로 생성
+    function cardTemplate(p){
+      return (
+        '<a class="project-card" href="detail.html?id=' + p.id + '" data-id="' + p.id + '">' +
+          '<span class="corner tl"></span><span class="corner br"></span>' +
+          '<div class="card-index">' + p.index + '</div>' +
+          '<div class="card-body">' +
+            '<h3 class="card-title">' + p.title + '</h3>' +
+            '<p class="card-desc">프로젝트 상세 콘텐츠 준비 중입니다.</p>' +
+          '</div>' +
+          '<div class="card-footer">' +
+            '<span class="card-badge">Coming Soon</span>' +
+            '<span class="card-status"><span class="dot"></span>LOCKED</span>' +
+          '</div>' +
+        '</a>'
+      );
+    }
+
+    // ============================================================
+    // 2) 무한 슬라이더용 트랙 채우기
+    //    같은 카드 목록을 두 번 렌더링해 이어붙이면, 트랙을 정확히
+    //    "전체 너비의 절반"만큼 이동시켰을 때 처음 위치와 완전히
+    //    동일한 그림이 되어 이음새 없이 반복되는 것처럼 보인다.
+    // ============================================================
+    var track = document.getElementById('sliderTrack');
+    var html = projects.map(cardTemplate).join('');
+    track.innerHTML = html + html; // 원본 + 복제본
+
+    // ============================================================
+    // 3) 무한 루프 위치 계산
+    //    xPos는 -50~0 범위를 넘어서도 계속 누적되는 "가상의" 위치값이고,
+    //    실제로 트랙에 적용할 때는 gsap.utils.wrap(-50, 0, xPos)로
+    //    감아서(wrap) 항상 -50~0 사이 값으로 변환한다.
+    //    트랙에 카드가 원본+복제본 두 벌 들어있기 때문에, -50%(=카드 세트
+    //    절반 너비)만큼 이동한 지점은 0% 지점과 시각적으로 완전히 같아서
+    //    이 wrap 덕분에 아무리 끌어도 이음새 없이 무한히 이어진다.
+    // ============================================================
+    var viewport = document.getElementById('sliderViewport');
+    var wrap = gsap.utils.wrap(-50, 0);
+    var xPos = 0; // 누적 위치(퍼센트, 감기지 않은 값)
+    var setX = gsap.quickSetter(track, 'xPercent'); // 매 프레임 빠르게 xPercent만 갱신
+
+    function render(){
+      setX(wrap(xPos));
+    }
+    render();
+
+    // ============================================================
+    // 4) 드래그 인터랙션 (Pointer Events)
+    //    누르고 있는 동안 손가락/마우스 이동량만큼 카드가 그대로 따라오고,
+    //    손을 떼면 마지막 이동 속도(velocity)를 이용해 관성으로 살짝 더
+    //    미끄러지다가 멈춘다.
+    // ============================================================
+    var isDragging = false;
+    var startPointerX = 0;
+    var startXPos = 0;
+    var lastPointerX = 0;
+    var lastTime = 0;
+    var velocity = 0;      // 퍼센트 / ms (완만하게 평활화된 값)
+    var maxMove = 0;       // 드래그 중 최대 이동거리(px) — 클릭과 드래그를 구분하는 데 사용
+    var inertiaTween = null;
+    var proxy = { val: 0 };
+
+    var DRAG_MULTIPLIER = 1.7; // 손가락/마우스 이동량 대비 카드가 따라오는 배율 (1보다 크면 더 많이 이동)
+    var FLING_PROJECTION = 420; // 손을 뗄 때 속도를 얼마나 길게 투사해서 관성 거리로 쓸지
+    var FLING_DURATION = 1.1;   // 관성으로 미끄러지며 멈추기까지 걸리는 시간(초)
+
+    function trackWidthPx(){
+      return track.scrollWidth; // 원본+복제본 전체 너비
+    }
+
+    viewport.addEventListener('pointerdown', function(e){
+      isDragging = true;
+      maxMove = 0;
+      if (inertiaTween) inertiaTween.kill();
+      viewport.setPointerCapture(e.pointerId);
+      viewport.classList.add('dragging');
+      startPointerX = lastPointerX = e.clientX;
+      startXPos = xPos;
+      lastTime = performance.now();
+      velocity = 0;
+    });
+
+    viewport.addEventListener('pointermove', function(e){
+      if (!isDragging) return;
+      var deltaPx = e.clientX - startPointerX;
+      maxMove = Math.max(maxMove, Math.abs(deltaPx));
+
+      // DRAG_MULTIPLIER를 곱해 실제 포인터 이동량보다 카드가 더 크고 빠르게 따라오게 함
+      var deltaPercent = (deltaPx / trackWidthPx()) * 100 * DRAG_MULTIPLIER;
+      xPos = startXPos + deltaPercent;
+      render();
+
+      var now = performance.now();
+      var dt = now - lastTime;
+      // dt가 너무 작으면(같은 프레임 근처) 속도가 튀므로 일정 시간 이상일 때만 갱신
+      if (dt > 4){
+        var stepPercent = ((e.clientX - lastPointerX) / trackWidthPx()) * 100 * DRAG_MULTIPLIER;
+        var instant = stepPercent / dt;
+        // 순간 속도를 그대로 쓰지 않고 이전 값과 섞어(저역통과) 손 떨림에 덜 민감하게 만듦
+        velocity = velocity * 0.6 + instant * 0.4;
+        lastPointerX = e.clientX;
+        lastTime = now;
+      }
+    });
+
+    function endDrag(){
+      if (!isDragging) return;
+      isDragging = false;
+      viewport.classList.remove('dragging');
+
+      // 관성: 마지막 속도를 기반으로 "드롭 이후에도 움직임이 유지"되도록
+      // 더 먼 거리(FLING_PROJECTION)를, 더 오래(FLING_DURATION) 미끄러지다가 감속하며 정지
+      proxy.val = xPos;
+      var target = xPos + velocity * FLING_PROJECTION;
+      inertiaTween = gsap.to(proxy, {
+        val: target,
+        duration: FLING_DURATION,
+        ease: 'power2.out',
+        onUpdate: function(){
+          xPos = proxy.val;
+          render();
+        }
+      });
+    }
+
+    viewport.addEventListener('pointerup', endDrag);
+    viewport.addEventListener('pointercancel', endDrag);
+    viewport.addEventListener('pointerleave', function(){ if (isDragging) endDrag(); });
+
+    // 드래그가 살짝이라도 있었던 클릭은 카드 링크로 이동하지 않도록 차단
+    // (드래그를 끝내려고 손을 뗀 지점이 카드 위였다면 그대로 페이지 이동해버리는 것을 방지)
+    track.addEventListener('click', function(e){
+      if (maxMove > 6){
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }, true);
+
+    // ============================================================
+    // 5) 이전/다음 버튼: 카드 한 장 폭만큼 부드럽게 스냅 이동
+    // ============================================================
+    function cardStepPercent(){
+      var firstCard = track.querySelector('.project-card');
+      var trackStyles = getComputedStyle(track);
+      var gap = parseFloat(trackStyles.columnGap || trackStyles.gap || 0);
+      var stepPx = firstCard.getBoundingClientRect().width + gap;
+      return (stepPx / trackWidthPx()) * 100;
+    }
+
+    function goToStep(direction){
+      if (inertiaTween) inertiaTween.kill();
+      proxy.val = xPos;
+      var target = xPos - direction * cardStepPercent(); // direction 1 = 다음, -1 = 이전
+      inertiaTween = gsap.to(proxy, {
+        val: target,
+        duration: 0.5,
+        ease: 'power2.out',
+        onUpdate: function(){
+          xPos = proxy.val;
+          render();
+        }
+      });
+    }
+
+    document.getElementById('nextBtn').addEventListener('click', function(){ goToStep(1); });
+    document.getElementById('prevBtn').addEventListener('click', function(){ goToStep(-1); });
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PROJECT HUB</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #05070a;
+    --bg-deep: #020305;
+    --accent: #2ea9ff;
+    --accent-strong: #6fd7ff;
+    --secondary: #6b7684;
+    --text: #e8ecf1;
+    --line: rgba(46, 169, 255, 0.16);
+  }
+
+  /* ===== 초기화 ===== */
+  *{ margin:0; padding:0; box-sizing:border-box; }
+
+  html, body{
+    width:100%; height:100%;
+    background: var(--bg);
+    overflow:hidden;
+  }
+
+  body{
+    position:relative;
+    font-family:'Rajdhani', sans-serif;
+    color: var(--text);
+    cursor: default;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  /* ===== 배경 레이어 ===== */
+  /* base dark gradient depth: 화면 전체를 덮는 어두운 방사형 그라디언트(가장 아래 z-index) */
+  .backdrop{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    background:
+      radial-gradient(ellipse at 50% 42%, #0c1420 0%, var(--bg) 55%, var(--bg-deep) 100%);
+  }
+
+  /* noise texture layer: SVG feTurbulence로 만든 그레인 노이즈를 타일링, 아주 낮은 opacity로 질감만 추가 */
+  .noise{
+    position:fixed;
+    inset:-20%;
+    z-index:1;
+    width:140%;
+    height:140%;
+    pointer-events:none;
+    opacity:0.055;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    background-repeat: repeat;
+  }
+
+  /* ===== 방사형 원/다각형 라인 패턴 ===== */
+  /* 화면 정중앙에 고정되는 SVG 패턴 컨테이너 (동심원 + 육각형 라인) */
+  .pattern{
+    position:fixed;
+    top:50%; left:50%;
+    z-index:1;
+    width: min(140vw, 140vh);
+    height: min(140vw, 140vh);
+    transform: translate(-50%, -50%);
+    pointer-events:none;
+    opacity:0.9;
+  }
+  .pattern svg{
+    width:100%; height:100%;
+    display:block;
+    overflow:visible;
+  }
+  /* 동심원 그룹: 아주 느리게 시계방향 회전 (과도한 움직임 방지를 위해 140s의 긴 주기) */
+  .pattern .ring-group{
+    animation: rotate-slow 140s linear infinite;
+    transform-origin: 500px 500px;
+  }
+  /* 다각형 그룹: 동심원과 반대 방향으로 회전해 은은한 패럴랙스 느낌 부여 */
+  .pattern .poly-group{
+    animation: rotate-slow-rev 100s linear infinite;
+    transform-origin: 500px 500px;
+  }
+  @keyframes rotate-slow{
+    from{ transform: rotate(0deg); }
+    to{ transform: rotate(360deg); }
+  }
+  @keyframes rotate-slow-rev{
+    from{ transform: rotate(0deg); }
+    to{ transform: rotate(-360deg); }
+  }
+
+  /* ===== 마우스 스포트라이트 ===== */
+  /* JS가 mousemove마다 --mx, --my 변수를 갱신하면 이 radial-gradient가 커서를 따라 움직임 */
+  .spotlight{
+    position:fixed;
+    inset:0;
+    z-index:2;
+    pointer-events:none;
+    background: radial-gradient(circle 420px at var(--mx, 50%) var(--my, 50%),
+        rgba(111, 215, 255, 0.10),
+        rgba(46, 169, 255, 0.045) 32%,
+        rgba(46, 169, 255, 0) 62%);
+  }
+
+  /* ===== 부가 오버레이 ===== */
+  /* scanline overlay: 브라운관/터미널 느낌을 주는 아주 얇은 가로줄, opacity를 낮춰 은은하게 처리 */
+  .scanlines{
+    position:fixed;
+    inset:0;
+    z-index:3;
+    pointer-events:none;
+    opacity:0.35;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.018) 0px,
+      rgba(255,255,255,0.018) 1px,
+      transparent 2px,
+      transparent 3px
+    );
+  }
+
+  /* vignette: 화면 가장자리를 어둡게 눌러줘서 중앙 콘텐츠에 시선이 집중되게 함 */
+  .vignette{
+    position:fixed;
+    inset:0;
+    z-index:3;
+    pointer-events:none;
+    background: radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0,0,0,0.55) 100%);
+  }
+
+  /* ===== 중앙 콘텐츠 ===== */
+  .stage{
+    position:relative;
+    z-index:5;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    padding: 0 24px;
+  }
+
+  .eyebrow{
+    font-family:'Rajdhani', sans-serif;
+    font-size: 0.8rem;
+    font-weight:600;
+    letter-spacing: 0.55em;
+    color: var(--secondary);
+    margin-bottom: 22px;
+    text-transform:uppercase;
+  }
+  .eyebrow::before{
+    content:"// ";
+    color: var(--accent);
+  }
+
+  /* ===== 글리치 타이틀 ===== */
+  /* 평상시: 그냥 밝은 텍스트 + 은은한 블루 글로우 */
+  .glitch-title{
+    position:relative;
+    font-family:'Orbitron', sans-serif;
+    font-weight:900;
+    font-size: clamp(1.75rem, 6vw, 4.3rem); /* 기존 대비 약 2/3 크기 */
+    letter-spacing: 0.06em;
+    line-height:1.05;
+    color: var(--text);
+    text-shadow: 0 0 24px rgba(46,169,255,0.25);
+    white-space: nowrap;
+  }
+
+  .glitch-title.glitching{
+    text-shadow:
+      0 0 24px rgba(46,169,255,0.35);
+  }
+  /* JS가 "glitching" 클래스를 붙이는 짧은 순간에만 아래 색수차(chromatic aberration) 레이어가 나타남 */
+  .glitch-title.glitching::before,
+  .glitch-title.glitching::after{
+    content: attr(data-text); /* JS가 계속 갱신하는 data-text(랜덤 글리프 문자열)를 그대로 복제 출력 */
+    position:absolute;
+    left:0; top:0;
+    width:100%;
+    background: var(--bg);
+    mix-blend-mode: lighten;
+  }
+  /* 시안색 레이어: 텍스트 윗부분만 잘라내 왼쪽 위로 살짝 어긋나게 흔들림 */
+  .glitch-title.glitching::before{
+    color:#37e8ff;
+    clip-path: polygon(0 10%, 100% 10%, 100% 32%, 0 32%);
+    transform: translate(-3px, -1px);
+    animation: glitch-shift-a 0.34s steps(2, end) infinite;
+  }
+  /* 마젠타색 레이어: 텍스트 아랫부분만 잘라내 오른쪽 아래로 살짝 어긋나게 흔들림 */
+  .glitch-title.glitching::after{
+    color:#ff3b7a;
+    clip-path: polygon(0 62%, 100% 62%, 100% 84%, 0 84%);
+    transform: translate(3px, 1px);
+    animation: glitch-shift-b 0.28s steps(2, end) infinite;
+  }
+  @keyframes glitch-shift-a{
+    0%{ transform: translate(-3px,-1px); }
+    50%{ transform: translate(2px,1px); }
+    100%{ transform: translate(-3px,-1px); }
+  }
+  @keyframes glitch-shift-b{
+    0%{ transform: translate(3px,1px); }
+    50%{ transform: translate(-2px,-1px); }
+    100%{ transform: translate(3px,1px); }
+  }
+
+  /* ===== 한 줄 소개 문구 ===== */
+  .subtitle{
+    margin-top: 26px;
+    font-size: clamp(0.95rem, 1.6vw, 1.15rem);
+    font-weight:500;
+    letter-spacing: 0.06em;
+    color: var(--secondary);
+  }
+  .subtitle span{
+    color: var(--accent-strong);
+  }
+
+  /* ===== ENTER 버튼 ===== */
+  /* 각진 모서리(border-radius 없음) + 코너 브래킷 장식으로 사이버펑크 HUD 느낌 */
+  .enter-btn{
+    margin-top: 64px;
+    position:relative;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    padding: 16px 46px;
+    font-family:'Rajdhani', sans-serif;
+    font-size: 1rem;
+    font-weight:700;
+    letter-spacing: 0.4em;
+    color: var(--accent-strong);
+    text-decoration:none;
+    text-transform:uppercase;
+    background: rgba(46,169,255,0.04);
+    border: 1px solid rgba(46,169,255,0.55);
+    transition: color 0.25s ease, background 0.25s ease, box-shadow 0.35s ease, border-color 0.25s ease;
+  }
+  /* 버튼 좌상단/우하단 모서리 브래킷 (평상시엔 작게, hover 시 커짐) */
+  .enter-btn::before,
+  .enter-btn::after{
+    content:"";
+    position:absolute;
+    width:10px; height:10px;
+    border: 1px solid var(--accent);
+    opacity:0.7;
+    transition: all 0.25s ease;
+  }
+  .enter-btn::before{ top:-1px; left:-1px; border-right:none; border-bottom:none; }
+  .enter-btn::after{ bottom:-1px; right:-1px; border-left:none; border-top:none; }
+
+  /* hover/focus 시 DESIGN.md 4번 규칙대로 네온 블루 글로우가 은은하게 번짐 */
+  .enter-btn:hover, .enter-btn:focus-visible{
+    color:#ffffff;
+    background: rgba(46,169,255,0.10);
+    border-color: var(--accent-strong);
+    box-shadow:
+      0 0 12px rgba(46,169,255,0.55),
+      0 0 34px rgba(46,169,255,0.30),
+      inset 0 0 16px rgba(46,169,255,0.18);
+  }
+  .enter-btn:hover::before, .enter-btn:hover::after,
+  .enter-btn:focus-visible::before, .enter-btn:focus-visible::after{
+    width:16px; height:16px;
+  }
+  .enter-btn:active{
+    transform: translateY(1px);
+  }
+
+  .enter-arrow{
+    display:inline-block;
+    transition: transform 0.25s ease;
+  }
+  .enter-btn:hover .enter-arrow{
+    transform: translateX(6px);
+  }
+
+  /* ===== HUD 장식 텍스트 (좌하단 좌표, 우하단 상태등) ===== */
+  .coords{
+    position:fixed;
+    left:28px;
+    bottom:24px;
+    z-index:5;
+    font-size:0.72rem;
+    letter-spacing:0.12em;
+    color: var(--secondary);
+    opacity:0.6;
+  }
+  .status{
+    position:fixed;
+    right:28px;
+    bottom:24px;
+    z-index:5;
+    font-size:0.72rem;
+    letter-spacing:0.12em;
+    color: var(--secondary);
+    opacity:0.6;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .status .dot{
+    width:6px; height:6px;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    animation: pulse-dot 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse-dot{
+    0%, 100%{ opacity:0.4; }
+    50%{ opacity:1; }
+  }
+
+  /* 모바일: 타이틀 줄바꿈 허용, HUD 장식 텍스트는 숨김 */
+  @media (max-width: 640px){
+    .glitch-title{ white-space: normal; }
+    .coords, .status{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- 배경: 어두운 그라디언트 + 노이즈 텍스처 (z-index 낮은 순) -->
+  <div class="backdrop"></div>
+  <div class="noise"></div>
+
+  <!-- 방사형 원/다각형 라인 패턴: 동심원 2겹 + 육각형 2겹 + 십자 중심선, 매우 느리게 회전 -->
+  <div class="pattern" aria-hidden="true">
+    <svg viewBox="0 0 1000 1000">
+      <!-- 동심원 그룹 -->
+      <g class="ring-group" fill="none" stroke="rgba(46,169,255,0.14)">
+        <circle cx="500" cy="500" r="180" stroke-width="1"/>
+        <circle cx="500" cy="500" r="280" stroke-width="1"/>
+        <circle cx="500" cy="500" r="380" stroke-width="1"/>
+        <circle cx="500" cy="500" r="480" stroke-width="1"/>
+        <!-- 점선 원 2개로 레이더/스캔 느낌 추가 -->
+        <circle cx="500" cy="500" r="180" stroke="rgba(46,169,255,0.35)" stroke-width="1" stroke-dasharray="2 14"/>
+        <circle cx="500" cy="500" r="380" stroke="rgba(46,169,255,0.30)" stroke-width="1" stroke-dasharray="1 22"/>
+      </g>
+      <!-- 육각형 다각형 그룹 (큰 것 2겹 + 중앙 작은 것 1개) -->
+      <g class="poly-group" fill="none" stroke="rgba(46,169,255,0.12)" stroke-width="1">
+        <polygon points="500,270 700,390 700,610 500,730 300,610 300,390" />
+        <polygon points="500,150 800,325 800,675 500,850 200,675 200,325" />
+        <polygon points="500,410 570,460 570,540 500,590 430,540 430,460" stroke="rgba(46,169,255,0.28)"/>
+      </g>
+      <!-- 화면 정중앙을 가로지르는 십자 기준선 -->
+      <g stroke="rgba(46,169,255,0.10)" stroke-width="1">
+        <line x1="500" y1="0" x2="500" y2="1000"/>
+        <line x1="0" y1="500" x2="1000" y2="500"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- 마우스를 따라다니는 radial-gradient 스포트라이트 (JS가 --mx/--my 갱신) -->
+  <div class="spotlight" id="spotlight"></div>
+  <!-- 스캔라인 + 비네트 오버레이 (분위기용, 클릭 통과되도록 pointer-events:none) -->
+  <div class="scanlines"></div>
+  <div class="vignette"></div>
+
+  <!-- 중앙 콘텐츠: 소개 문구 / 글리치 타이틀 / 서브 카피 / ENTER 버튼 -->
+  <main class="stage">
+    <p class="eyebrow">Portfolio Access Terminal</p>
+    <!-- data-text는 글리치 애니메이션 중 ::before/::after가 복제해서 보여줄 원본 텍스트 -->
+    <h1 class="glitch-title" id="glitchTitle" data-text="PROJECT HUB">PROJECT HUB</h1>
+    <p class="subtitle">Selected works &amp; case studies — <span>designed and built by a developer who ships.</span></p>
+
+    <!-- PRD 흐름: ENTER 클릭 시 프로젝트 리스트 페이지(list.html)로 이동 -->
+    <a href="list.html" class="enter-btn" id="enterBtn">
+      <span>Enter</span>
+      <span class="enter-arrow">&#8594;</span>
+    </a>
+  </main>
+
+  <!-- 좌하단 좌표 표시(HUD 장식용, 실제 좌표는 JS가 실시간 갱신) / 우하단 상태등 -->
+  <div class="coords" id="coords">X:0000 Y:0000</div>
+  <div class="status"><span class="dot"></span>SYSTEM ONLINE</div>
+
+<script>
+  (function(){
+    // ============================================================
+    // 1) 마우스 추적 스포트라이트
+    //    mousemove(및 모바일 touchmove) 발생마다 CSS 변수 --mx/--my를
+    //    갱신하면, .spotlight의 radial-gradient가 그 좌표를 기준으로
+    //    다시 그려지면서 "커서를 따라다니는" 효과가 만들어진다.
+    // ============================================================
+    var root = document.documentElement;
+    var coords = document.getElementById('coords'); // 좌하단 좌표 HUD 텍스트
+
+    function setSpot(x, y){
+      root.style.setProperty('--mx', x + 'px');
+      root.style.setProperty('--my', y + 'px');
+      if (coords){
+        // 좌표를 4자리 0-padding으로 표시 (예: X:0842 Y:0317)
+        coords.textContent = 'X:' + String(Math.round(x)).padStart(4,'0') +
+                              ' Y:' + String(Math.round(y)).padStart(4,'0');
+      }
+    }
+
+    window.addEventListener('mousemove', function(e){
+      setSpot(e.clientX, e.clientY);
+    }, { passive:true });
+
+    // 터치 디바이스에서는 touchmove로 동일하게 동작
+    window.addEventListener('touchmove', function(e){
+      if (e.touches && e.touches[0]){
+        setSpot(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive:true });
+
+    // 마우스를 움직이기 전에는 화면 중앙을 기본 스포트라이트 위치로 사용
+    setSpot(window.innerWidth/2, window.innerHeight/2);
+
+    // ============================================================
+    // 2) 글리치 타이틀 애니메이션
+    //    "PROJECT HUB" 원본 텍스트를 랜덤 글리프로 빠르게 스크램블했다가,
+    //    시간이 지날수록 원래 글자로 하나씩 확정(reveal)되며 복원된다.
+    //    이 사이클을 일정 주기로 반복한다.
+    // ============================================================
+    var titleEl = document.getElementById('glitchTitle');
+    var original = titleEl.getAttribute('data-text') || titleEl.textContent; // 복원 목표 텍스트
+    var glyphs = '!<>-_\\/[]{}=+*^?#$%&01アイウエオ'; // 스크램블에 사용할 랜덤 문자 후보
+
+    function randomGlyph(){
+      return glyphs[Math.floor(Math.random() * glyphs.length)];
+    }
+
+    // 글리치 한 사이클 실행: 짧은 시간 동안 랜덤 문자로 깜빡이다가 원문으로 복원
+    function runGlitch(){
+      titleEl.classList.add('glitching'); // CSS 색수차(시안/마젠타 어긋남) 레이어 활성화
+      var tick = 0;
+      var totalTicks = 13; // 총 진행 프레임 수 (42ms * 13 ≈ 0.55초 동안 진행)
+
+      var iv = setInterval(function(){
+        tick++;
+        // tick이 진행될수록 원래 글자가 노출될 확률이 제곱으로 증가 → 뒤로 갈수록 빠르게 정착
+        var revealChance = Math.pow(tick / totalTicks, 2);
+        var out = '';
+        for (var i = 0; i < original.length; i++){
+          var ch = original[i];
+          if (ch === ' '){ out += ' '; continue; } // 공백은 그대로 유지
+          out += (Math.random() < revealChance) ? ch : randomGlyph();
+        }
+        // textContent와 data-text를 함께 갱신해야 ::before/::after 복제 레이어도 같이 바뀐다
+        titleEl.textContent = out;
+        titleEl.setAttribute('data-text', out);
+
+        if (tick >= totalTicks){
+          // 사이클 종료: 완전히 원본 텍스트로 고정하고 글리치 클래스 제거
+          clearInterval(iv);
+          titleEl.textContent = original;
+          titleEl.setAttribute('data-text', original);
+          titleEl.classList.remove('glitching');
+        }
+      }, 42);
+    }
+
+    setTimeout(runGlitch, 900);     // 페이지 진입 직후 한 번 실행
+    setInterval(runGlitch, 4400);   // 이후 4.4초마다 반복
+  })();
+</script>
+</body>
+</html>

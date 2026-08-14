@@ -207,7 +207,7 @@
     cursor:pointer;
     overflow:hidden;
     transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.35s ease;
-    /* 카드가 <button>이라 기본 버튼 스타일(폰트/정렬/외곽선)을 리셋해 링크였을 때와 동일하게 보이게 함 */
+    /* 카드가 <a> 또는 <button>이라 브라우저 기본 스타일(폰트/정렬/외곽선)을 리셋해 항상 동일하게 보이게 함 */
     font-family:'Rajdhani', sans-serif;
     text-align:left;
     appearance:none;
@@ -307,6 +307,15 @@
     box-shadow: 0 0 6px var(--accent);
   }
 
+  /* 배포된(라이브) 프로젝트 카드 강조 스타일 */
+  .card-badge.is-live{
+    color:#04110a;
+    background: var(--accent-strong);
+    border-color: var(--accent-strong);
+  }
+  .card-status.is-live{ color: var(--accent-strong); }
+  .card-status.is-live .dot{ background: var(--accent-strong); box-shadow: 0 0 6px var(--accent-strong); }
+
   /* ===== 이전/다음 컨트롤 ===== */
   .slider-controls{
     display:flex;
@@ -338,198 +347,19 @@
     text-transform:uppercase;
   }
 
-  /* ===== 상세보기 모달 ===== */
-  /* 카드 클릭 시 별도 페이지로 이동하지 않고, 같은 화면 위에 오버레이로 띄운다 */
-  .modal-overlay{
-    position:fixed;
-    inset:0;
-    z-index:50;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding: 32px 20px;
-    background: rgba(2,3,5,0.78);
-    backdrop-filter: blur(4px);
-    opacity:0;
-    visibility:hidden;
-    transition: opacity 0.25s ease;
+  /* 잠긴(미배포) 카드: 클릭해도 이동하지 않는 상태를 시각적으로 구분 */
+  .project-card.is-locked{
+    cursor:default;
   }
-  .modal-overlay.open{
-    opacity:1;
-    visibility:visible;
-  }
-  .modal-box{
-    position:relative;
-    width:100%;
-    max-width: 620px;
-    max-height: 84vh;
-    overflow-y:auto;
-    padding: 40px 36px;
-    background: linear-gradient(160deg, var(--card-bg) 0%, #060a10 100%);
-    border: 1px solid var(--card-border);
-    transform: translateY(14px);
-    transition: transform 0.25s ease;
-  }
-  .modal-overlay.open .modal-box{ transform: translateY(0); }
-  .modal-box .corner{
-    position:absolute;
-    width:14px; height:14px;
-    border: 1px solid var(--accent);
-    opacity:0.6;
-  }
-  .modal-box .corner.tl{ top:-1px; left:-1px; border-right:none; border-bottom:none; }
-  .modal-box .corner.tr{ top:-1px; right:-1px; border-left:none; border-bottom:none; }
-  .modal-box .corner.bl{ bottom:-1px; left:-1px; border-right:none; border-top:none; }
-  .modal-box .corner.br{ bottom:-1px; right:-1px; border-left:none; border-top:none; }
-
-  .modal-close{
-    position:absolute;
-    top:16px; right:16px;
-    width:34px; height:34px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background: rgba(46,169,255,0.04);
-    border: 1px solid rgba(46,169,255,0.4);
-    color: var(--accent-strong);
-    font-size:1rem;
-    line-height:1;
-    cursor:pointer;
-    transition: background 0.2s ease, box-shadow 0.25s ease, color 0.2s ease;
-  }
-  .modal-close:hover, .modal-close:focus-visible{
-    color:#fff;
-    background: rgba(46,169,255,0.12);
-    box-shadow: 0 0 14px rgba(46,169,255,0.5);
-  }
-
-  .modal-eyebrow{
-    font-size:0.72rem;
-    font-weight:600;
-    letter-spacing:0.4em;
-    color: var(--secondary);
-    text-transform:uppercase;
-  }
-  .modal-eyebrow::before{ content:"// "; color: var(--accent); }
-  .modal-title{
-    margin-top:12px;
-    font-family:'Orbitron', sans-serif;
-    font-weight:900;
-    font-size: clamp(1.4rem, 4vw, 1.9rem);
-    letter-spacing:0.04em;
-    text-shadow: 0 0 20px rgba(46,169,255,0.22);
-  }
-  .modal-sub{
-    margin-top:10px;
-    font-size:0.9rem;
-    color: var(--secondary);
-  }
-
-  .modal-section{ margin-top:30px; }
-  .modal-section-label{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    margin-bottom:16px;
-    font-size:0.7rem;
-    font-weight:700;
-    letter-spacing:0.28em;
-    text-transform:uppercase;
-    color: var(--accent-strong);
-  }
-  .modal-section-label::after{
-    content:"";
-    flex:1;
-    height:1px;
-    background: linear-gradient(to right, rgba(46,169,255,0.4), transparent);
-  }
-
-  .modal-meta-grid{
-    display:grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap:12px;
-  }
-  .modal-meta-card{
-    padding: 14px 16px;
-    background: rgba(46,169,255,0.03);
-    border: 1px solid var(--card-border);
-  }
-  .modal-meta-label{
-    font-size:0.64rem;
-    font-weight:700;
-    letter-spacing:0.16em;
-    color: var(--accent-strong);
-    text-transform:uppercase;
-  }
-  .modal-meta-value{
-    margin-top:6px;
-    font-size:0.85rem;
-    font-weight:600;
-    color: var(--secondary);
-  }
-
-  .modal-tag-grid{
-    display:flex;
-    flex-wrap:wrap;
-    gap:10px;
-  }
-  .modal-tag{
-    padding: 8px 14px;
-    font-size:0.78rem;
-    font-weight:600;
-    letter-spacing:0.06em;
-    color: var(--secondary);
-    background: rgba(46,169,255,0.03);
-    border: 1px solid rgba(46,169,255,0.22);
-  }
-
-  .modal-story{ display:flex; flex-direction:column; gap:14px; }
-  .modal-story-block{
-    padding: 14px 16px;
-    background: rgba(46,169,255,0.03);
-    border-left: 2px solid var(--accent);
-  }
-  .modal-story-step{
-    font-size:0.62rem;
-    font-weight:700;
-    letter-spacing:0.14em;
-    color: var(--accent-strong);
-    text-transform:uppercase;
-  }
-  .modal-story-desc{
-    margin-top:6px;
-    font-size:0.85rem;
-    color: var(--secondary);
-    line-height:1.6;
-  }
-
-  .modal-gallery{
-    display:grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap:10px;
-  }
-  .modal-gallery-frame{
-    aspect-ratio: 4 / 3;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:
-      repeating-linear-gradient(135deg, rgba(46,169,255,0.06) 0px, rgba(46,169,255,0.06) 1px, transparent 1px, transparent 12px),
-      #060a10;
-    border: 1px solid var(--card-border);
-    font-size:0.62rem;
-    font-weight:600;
-    letter-spacing:0.1em;
-    color: var(--secondary);
-    text-transform:uppercase;
+  .project-card.is-locked:hover{
+    transform:none;
+    border-color: var(--card-border);
+    box-shadow:none;
   }
 
   @media (max-width: 640px){
     .topbar{ padding: 22px 20px; }
     .project-card{ width: 220px; min-height: 300px; padding: 20px 18px; }
-    .modal-box{ padding: 32px 22px; }
-    .modal-meta-grid{ grid-template-columns: 1fr; }
-    .modal-gallery{ grid-template-columns: repeat(2, 1fr); }
   }
 </style>
 </head>
@@ -570,103 +400,54 @@
     </div>
   </section>
 
-  <!-- 상세보기 모달: 카드 클릭 시 페이지 이동 없이 이 오버레이가 뜬다 -->
-  <div class="modal-overlay" id="modalOverlay" aria-hidden="true">
-    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <span class="corner tl"></span><span class="corner tr"></span>
-      <span class="corner bl"></span><span class="corner br"></span>
-      <button class="modal-close" id="modalClose" type="button" aria-label="닫기">&#10005;</button>
-
-      <p class="modal-eyebrow" id="modalEyebrow">Archive File // 00</p>
-      <h2 class="modal-title" id="modalTitle">PROJECT 00</h2>
-      <p class="modal-sub">한 줄 소개 콘텐츠 준비 중입니다 (Coming Soon)</p>
-
-      <div class="modal-section">
-        <p class="modal-section-label">Overview</p>
-        <div class="modal-meta-grid">
-          <div class="modal-meta-card">
-            <p class="modal-meta-label">Period</p>
-            <p class="modal-meta-value">준비 중</p>
-          </div>
-          <div class="modal-meta-card">
-            <p class="modal-meta-label">Role</p>
-            <p class="modal-meta-value">준비 중</p>
-          </div>
-          <div class="modal-meta-card">
-            <p class="modal-meta-label">Team</p>
-            <p class="modal-meta-value">준비 중</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-section">
-        <p class="modal-section-label">Tech Stack</p>
-        <div class="modal-tag-grid">
-          <span class="modal-tag">STACK_01</span>
-          <span class="modal-tag">STACK_02</span>
-          <span class="modal-tag">STACK_03</span>
-          <span class="modal-tag">STACK_04</span>
-        </div>
-      </div>
-
-      <div class="modal-section">
-        <p class="modal-section-label">Story</p>
-        <div class="modal-story">
-          <div class="modal-story-block">
-            <p class="modal-story-step">01 · Problem</p>
-            <p class="modal-story-desc">문제 정의 콘텐츠가 이곳에 채워질 예정입니다.</p>
-          </div>
-          <div class="modal-story-block">
-            <p class="modal-story-step">02 · Solution</p>
-            <p class="modal-story-desc">해결 과정 콘텐츠가 이곳에 채워질 예정입니다.</p>
-          </div>
-          <div class="modal-story-block">
-            <p class="modal-story-step">03 · Result</p>
-            <p class="modal-story-desc">결과 콘텐츠가 이곳에 채워질 예정입니다.</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-section">
-        <p class="modal-section-label">Gallery</p>
-        <div class="modal-gallery">
-          <div class="modal-gallery-frame">NO IMAGE</div>
-          <div class="modal-gallery-frame">NO IMAGE</div>
-          <div class="modal-gallery-frame">NO IMAGE</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
 <script>
   (function(){
     // ============================================================
     // 1) 카드 데이터 생성 (현재는 콘텐츠 없이 틀만 구성 — PRD 3번)
     //    추후 실제 프로젝트 데이터가 준비되면 이 배열만 교체하면 된다.
     // ============================================================
+    // 배포 완료 등, 기본값(준비 중)과 다르게 채울 프로젝트만 여기에 덮어쓴다
+    var projectOverrides = {
+      1: {
+        url: 'https://review-sinn0o1.vercel.app/',
+        desc: '라이브 데모가 배포되었습니다. 카드를 클릭하면 새 탭에서 열립니다.',
+        badge: 'Live',
+        status: 'ONLINE'
+      }
+    };
+
     var projects = Array.from({ length: 8 }, function(_, i){
       var num = i + 1;
-      return {
+      var base = {
         id: num,
         index: String(num).padStart(2, '0'),
-        title: 'PROJECT ' + String(num).padStart(2, '0')
+        title: 'PROJECT ' + String(num).padStart(2, '0'),
+        desc: '프로젝트 상세 콘텐츠 준비 중입니다.',
+        badge: 'Coming Soon',
+        status: 'LOCKED',
+        url: null
       };
+      return Object.assign(base, projectOverrides[num] || {});
     });
 
     // 카드 하나의 마크업을 문자열로 생성
-    // 페이지 이동 없이 모달을 띄우는 용도이므로 <a href>가 아닌 <button>으로 구성한다
+    // 모든 카드를 <button>으로 통일한다. 슬라이더가 드래그를 위해
+    // pointer capture를 사용하는 탓에 <a href>의 기본 이동 동작을 그대로
+    // 믿을 수 없어서(캡처 중 click 대상이 카드가 아닌 viewport로 리타깃됨),
+    // 실제 이동은 4)의 pointerup 핸들러에서 JS로 직접 처리한다.
     function cardTemplate(p){
+      var liveClass = p.url ? ' is-live' : ' is-locked';
       return (
-        '<button type="button" class="project-card" data-id="' + p.id + '" aria-haspopup="dialog">' +
+        '<button type="button" class="project-card' + liveClass + '" data-id="' + p.id + '">' +
           '<span class="corner tl"></span><span class="corner br"></span>' +
           '<div class="card-index">' + p.index + '</div>' +
           '<div class="card-body">' +
             '<h3 class="card-title">' + p.title + '</h3>' +
-            '<p class="card-desc">프로젝트 상세 콘텐츠 준비 중입니다.</p>' +
+            '<p class="card-desc">' + p.desc + '</p>' +
           '</div>' +
           '<div class="card-footer">' +
-            '<span class="card-badge">Coming Soon</span>' +
-            '<span class="card-status"><span class="dot"></span>LOCKED</span>' +
+            '<span class="card-badge' + (p.url ? ' is-live' : '') + '">' + p.badge + '</span>' +
+            '<span class="card-status' + (p.url ? ' is-live' : '') + '"><span class="dot"></span>' + p.status + '</span>' +
           '</div>' +
         '</button>'
       );
@@ -725,9 +506,16 @@
       return track.scrollWidth; // 원본+복제본 전체 너비
     }
 
+    // 눌렀던(pointerdown) 시점의 카드를 기억해둔다.
+    // setPointerCapture 때문에 이후 click/mouseup의 대상이 viewport 자신으로
+    // 리타깃되는 브라우저 특성이 있어(카드가 아니라!), click 이벤트에 기대지 않고
+    // pointerdown 시점에 실제로 눌린 카드를 직접 기록해 두었다가 pointerup에서 사용한다.
+    var pressedCard = null;
+
     viewport.addEventListener('pointerdown', function(e){
       isDragging = true;
       maxMove = 0;
+      pressedCard = e.target.closest('.project-card');
       if (inertiaTween) inertiaTween.kill();
       viewport.setPointerCapture(e.pointerId);
       viewport.classList.add('dragging');
@@ -760,10 +548,16 @@
       }
     });
 
-    function endDrag(){
+    function endDrag(e){
       if (!isDragging) return;
       isDragging = false;
       viewport.classList.remove('dragging');
+
+      // setPointerCapture가 걸려 있으면 이어지는 mouseup/click의 대상이 실제 카드가 아니라
+      // viewport 자신으로 리타깃되므로, 더 이상 필요 없어진 캡처는 여기서 해제해준다.
+      if (e && viewport.hasPointerCapture && viewport.hasPointerCapture(e.pointerId)){
+        viewport.releasePointerCapture(e.pointerId);
+      }
 
       // 관성: 마지막 속도를 기반으로 "드롭 이후에도 움직임이 유지"되도록
       // 더 먼 거리(FLING_PROJECTION)를, 더 오래(FLING_DURATION) 미끄러지다가 감속하며 정지
@@ -780,18 +574,28 @@
       });
     }
 
-    viewport.addEventListener('pointerup', endDrag);
-    viewport.addEventListener('pointercancel', endDrag);
-    viewport.addEventListener('pointerleave', function(){ if (isDragging) endDrag(); });
-
-    // 드래그가 살짝이라도 있었던 클릭은 카드 링크로 이동하지 않도록 차단
-    // (드래그를 끝내려고 손을 뗀 지점이 카드 위였다면 그대로 페이지 이동해버리는 것을 방지)
-    track.addEventListener('click', function(e){
-      if (maxMove > 6){
-        e.preventDefault();
-        e.stopPropagation();
+    // 드래그 이동 없이(=순수 클릭으로) 손을 뗀 경우에만, pointerdown 때 기억해둔
+    // 카드로 실제 이동을 처리한다. click 이벤트의 리타깃 문제를 피하기 위해
+    // 네이티브 click/앵커 기본 동작에 기대지 않고 여기서 직접 window.open을 호출한다.
+    function openPressedCard(){
+      var card = pressedCard;
+      pressedCard = null;
+      if (!card) return;
+      var id = parseInt(card.dataset.id, 10);
+      var project = projects.find(function(p){ return p.id === id; });
+      if (project && project.url){
+        window.open(project.url, '_blank', 'noopener,noreferrer');
       }
-    }, true);
+    }
+
+    viewport.addEventListener('pointerup', function(e){
+      var wasClick = isDragging && maxMove <= 6;
+      endDrag(e);
+      if (wasClick) openPressedCard();
+      else pressedCard = null;
+    });
+    viewport.addEventListener('pointercancel', function(e){ pressedCard = null; endDrag(e); });
+    viewport.addEventListener('pointerleave', function(e){ if (isDragging){ pressedCard = null; endDrag(e); } });
 
     // ============================================================
     // 5) 이전/다음 버튼: 카드 한 장 폭만큼 부드럽게 스냅 이동
@@ -822,59 +626,8 @@
     document.getElementById('nextBtn').addEventListener('click', function(){ goToStep(1); });
     document.getElementById('prevBtn').addEventListener('click', function(){ goToStep(-1); });
 
-    // ============================================================
-    // 6) 상세보기 모달
-    //    카드를 클릭하면 별도 페이지로 이동하는 대신, 같은 화면 위에
-    //    모달 오버레이를 띄워 프로젝트 번호에 맞는 내용을 채워 보여준다.
-    // ============================================================
-    var overlay = document.getElementById('modalOverlay');
-    var modalEyebrow = document.getElementById('modalEyebrow');
-    var modalTitle = document.getElementById('modalTitle');
-    var lastFocusedEl = null;
-
-    function openModal(id){
-      var project = projects.find(function(p){ return p.id === id; });
-      if (!project) return;
-
-      modalEyebrow.textContent = 'Archive File // ' + project.index;
-      modalTitle.textContent = project.title;
-
-      lastFocusedEl = document.activeElement;
-      overlay.classList.add('open');
-      overlay.setAttribute('aria-hidden', 'false');
-      document.body.style.overflow = 'hidden'; // 모달이 떠 있는 동안 배경 스크롤 방지
-      document.getElementById('modalClose').focus();
-    }
-
-    function closeModal(){
-      if (!overlay.classList.contains('open')) return;
-      overlay.classList.remove('open');
-      overlay.setAttribute('aria-hidden', 'true');
-      document.body.style.overflow = '';
-      if (lastFocusedEl) lastFocusedEl.focus(); // 모달을 열었던 카드로 포커스 복귀
-    }
-
-    // 카드 클릭 → 모달 오픈 (이벤트 위임)
-    // 드래그 종료 시점의 클릭은 위 4)의 캡처 리스너가 이미 preventDefault()를 호출해두므로
-    // defaultPrevented를 확인해 드래그와 실제 클릭을 구분한다
-    track.addEventListener('click', function(e){
-      if (e.defaultPrevented) return;
-      var card = e.target.closest('.project-card');
-      if (!card) return;
-      openModal(parseInt(card.dataset.id, 10));
-    });
-
-    document.getElementById('modalClose').addEventListener('click', closeModal);
-
-    // 오버레이의 어두운 배경(모달 박스 바깥) 클릭 시 닫기
-    overlay.addEventListener('click', function(e){
-      if (e.target === overlay) closeModal();
-    });
-
-    // Esc 키로 닫기
-    document.addEventListener('keydown', function(e){
-      if (e.key === 'Escape') closeModal();
-    });
+    // 6) 카드 클릭 → 사이트 이동 로직은 4)의 pointerup 핸들러(openPressedCard)에서
+    //    처리한다. 자세한 이유는 4) 상단 주석 참고.
   })();
 </script>
 </body>

@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PROJECT HUB — About</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #05070a;
+    --bg-deep: #020305;
+    --accent: #2ea9ff;
+    --accent-strong: #6fd7ff;
+    --secondary: #6b7684;
+    --text: #e8ecf1;
+    --card-bg: #0a0f16;
+    --card-border: rgba(46,169,255,0.22);
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+
+  html, body{
+    width:100%;
+    min-height:100%;
+    background: var(--bg);
+  }
+
+  body{
+    position:relative;
+    font-family:'Rajdhani', sans-serif;
+    color: var(--text);
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+
+  /* ===== 배경 (index.html / list.html과 톤을 맞춘 다크 그라디언트 + 노이즈 + 비네트) ===== */
+  .backdrop{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    background: radial-gradient(ellipse at 50% 0%, #0c1420 0%, var(--bg) 55%, var(--bg-deep) 100%);
+  }
+  .noise{
+    position:fixed;
+    inset:-20%;
+    z-index:0;
+    width:140%;
+    height:140%;
+    pointer-events:none;
+    opacity:0.05;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    background-repeat: repeat;
+  }
+  .vignette{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    pointer-events:none;
+    background: radial-gradient(ellipse at 50% 50%, transparent 45%, rgba(0,0,0,0.6) 100%);
+  }
+
+  /* ===== 상단 헤더 (list.html과 동일 톤) ===== */
+  .topbar{
+    position:relative;
+    z-index:5;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding: 28px 40px;
+  }
+  .back-link{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    font-size:0.85rem;
+    font-weight:600;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color: var(--secondary);
+    text-decoration:none;
+    transition: color 0.2s ease, text-shadow 0.2s ease;
+  }
+  .back-link:hover{
+    color: var(--accent-strong);
+    text-shadow: 0 0 10px rgba(46,169,255,0.6);
+  }
+  .brand{
+    font-family:'Orbitron', sans-serif;
+    font-size:0.85rem;
+    font-weight:700;
+    letter-spacing:0.3em;
+    color: var(--secondary);
+  }
+  .brand span{ color: var(--accent-strong); }
+
+  /* ===== 페이지 타이틀 영역 ===== */
+  .page-head{
+    position:relative;
+    z-index:5;
+    text-align:center;
+    padding: 10px 24px 8px;
+  }
+  .page-eyebrow{
+    font-size:0.78rem;
+    font-weight:600;
+    letter-spacing:0.5em;
+    color: var(--secondary);
+    text-transform:uppercase;
+  }
+  .page-eyebrow::before{ content:"// "; color: var(--accent); }
+  .page-title{
+    margin-top:14px;
+    font-family:'Orbitron', sans-serif;
+    font-weight:900;
+    font-size: clamp(1.6rem, 4.5vw, 3rem);
+    letter-spacing:0.05em;
+    text-shadow: 0 0 22px rgba(46,169,255,0.22);
+  }
+  .page-sub{
+    margin-top:12px;
+    font-size:0.95rem;
+    color: var(--secondary);
+    letter-spacing:0.03em;
+  }
+
+  /* ===== 본문 컨테이너 ===== */
+  .content{
+    position:relative;
+    z-index:5;
+    flex:1;
+    width:100%;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 48px 40px 80px;
+    display:flex;
+    flex-direction:column;
+    gap: 56px;
+  }
+
+  /* ===== 섹션 공통 ===== */
+  .section-label{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin-bottom:22px;
+    font-size:0.78rem;
+    font-weight:700;
+    letter-spacing:0.32em;
+    text-transform:uppercase;
+    color: var(--accent-strong);
+  }
+  .section-label::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background: linear-gradient(to right, rgba(46,169,255,0.4), transparent);
+  }
+
+  /* ===== 프로필 패널 ===== */
+  .profile-panel{
+    position:relative;
+    display:flex;
+    gap:36px;
+    padding: 32px;
+    background: linear-gradient(160deg, var(--card-bg) 0%, #060a10 100%);
+    border: 1px solid var(--card-border);
+  }
+  .profile-panel .corner{
+    position:absolute;
+    width:14px; height:14px;
+    border: 1px solid var(--accent);
+    opacity:0.6;
+  }
+  .corner.tl{ top:-1px; left:-1px; border-right:none; border-bottom:none; }
+  .corner.tr{ top:-1px; right:-1px; border-left:none; border-bottom:none; }
+  .corner.bl{ bottom:-1px; left:-1px; border-right:none; border-top:none; }
+  .corner.br{ bottom:-1px; right:-1px; border-left:none; border-top:none; }
+
+  /* ID 사진 자리 — 실제 이미지 준비 전까지 HUD 패턴으로 채운 플레이스홀더 */
+  .id-frame{
+    flex: 0 0 128px;
+    width:128px;
+    height:128px;
+    position:relative;
+    border: 1px solid rgba(46,169,255,0.35);
+    background:
+      repeating-linear-gradient(135deg, rgba(46,169,255,0.07) 0px, rgba(46,169,255,0.07) 1px, transparent 1px, transparent 10px),
+      #060a10;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+  }
+  .id-frame span{
+    font-size:0.62rem;
+    font-weight:600;
+    letter-spacing:0.12em;
+    color: var(--secondary);
+    text-transform:uppercase;
+  }
+
+  .profile-info{ flex:1; min-width:0; }
+  .profile-name{
+    font-family:'Orbitron', sans-serif;
+    font-size: clamp(1.3rem, 3vw, 1.9rem);
+    font-weight:900;
+    letter-spacing:0.04em;
+  }
+  .profile-role{
+    margin-top:8px;
+    font-size:0.95rem;
+    font-weight:600;
+    letter-spacing:0.08em;
+    color: var(--accent-strong);
+    text-transform:uppercase;
+  }
+  .profile-bio{
+    margin-top:18px;
+    font-size:0.95rem;
+    line-height:1.7;
+    color: var(--secondary);
+    max-width: 56ch;
+  }
+  .profile-status{
+    margin-top:20px;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-size:0.68rem;
+    letter-spacing:0.14em;
+    color: var(--secondary);
+    text-transform:uppercase;
+  }
+  .profile-status .dot{
+    width:6px; height:6px;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    animation: pulse-dot 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse-dot{
+    0%, 100%{ opacity:0.4; }
+    50%{ opacity:1; }
+  }
+
+  /* ===== 기술 스택 태그 ===== */
+  .skill-grid{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .skill-tag{
+    padding: 10px 18px;
+    font-size:0.82rem;
+    font-weight:600;
+    letter-spacing:0.08em;
+    color: var(--secondary);
+    background: rgba(46,169,255,0.03);
+    border: 1px solid rgba(46,169,255,0.22);
+    transition: color 0.2s ease, border-color 0.2s ease, box-shadow 0.25s ease;
+  }
+  .skill-tag:hover{
+    color: var(--accent-strong);
+    border-color: var(--accent-strong);
+    box-shadow: 0 0 12px rgba(46,169,255,0.35);
+  }
+
+  /* ===== 경력/타임라인 ===== */
+  .timeline{
+    display:flex;
+    flex-direction:column;
+  }
+  .timeline-item{
+    position:relative;
+    padding: 18px 0 18px 28px;
+    border-left: 1px solid rgba(46,169,255,0.25);
+  }
+  .timeline-item::before{
+    content:"";
+    position:absolute;
+    left:-5px;
+    top:24px;
+    width:9px; height:9px;
+    background: var(--bg);
+    border: 1px solid var(--accent);
+  }
+  .timeline-item:last-child{ border-left-color: transparent; }
+  .timeline-period{
+    font-size:0.72rem;
+    letter-spacing:0.14em;
+    color: var(--accent-strong);
+    text-transform:uppercase;
+  }
+  .timeline-title{
+    margin-top:6px;
+    font-family:'Orbitron', sans-serif;
+    font-size:1rem;
+    font-weight:700;
+    letter-spacing:0.03em;
+  }
+  .timeline-desc{
+    margin-top:6px;
+    font-size:0.88rem;
+    color: var(--secondary);
+    line-height:1.6;
+  }
+
+  /* ===== 연락처 카드 ===== */
+  .contact-grid{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap:16px;
+  }
+  .contact-card{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    padding: 20px 22px;
+    background: rgba(46,169,255,0.03);
+    border: 1px solid var(--card-border);
+    text-decoration:none;
+    color: var(--text);
+    transition: border-color 0.25s ease, box-shadow 0.3s ease, transform 0.25s ease;
+  }
+  .contact-card:hover{
+    transform: translateY(-4px);
+    border-color: var(--accent-strong);
+    box-shadow: 0 0 16px rgba(46,169,255,0.3);
+  }
+  .contact-label{
+    font-size:0.68rem;
+    font-weight:700;
+    letter-spacing:0.18em;
+    color: var(--accent-strong);
+    text-transform:uppercase;
+  }
+  .contact-value{
+    font-size:0.92rem;
+    font-weight:600;
+    color: var(--text);
+    letter-spacing:0.02em;
+    word-break: break-all;
+  }
+  .contact-value.pending{
+    color: var(--secondary);
+    font-weight:500;
+  }
+
+  /* ===== 리스트로 돌아가기 CTA (index.html의 ENTER 버튼과 동일 톤) ===== */
+  .cta-wrap{
+    display:flex;
+    justify-content:center;
+    padding-top:12px;
+  }
+  .cta-btn{
+    position:relative;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    padding: 15px 42px;
+    font-size:0.95rem;
+    font-weight:700;
+    letter-spacing:0.36em;
+    color: var(--accent-strong);
+    text-decoration:none;
+    text-transform:uppercase;
+    background: rgba(46,169,255,0.04);
+    border: 1px solid rgba(46,169,255,0.55);
+    transition: color 0.25s ease, background 0.25s ease, box-shadow 0.35s ease, border-color 0.25s ease;
+  }
+  .cta-btn:hover, .cta-btn:focus-visible{
+    color:#ffffff;
+    background: rgba(46,169,255,0.10);
+    border-color: var(--accent-strong);
+    box-shadow:
+      0 0 12px rgba(46,169,255,0.55),
+      0 0 34px rgba(46,169,255,0.30),
+      inset 0 0 16px rgba(46,169,255,0.18);
+  }
+
+  @media (max-width: 720px){
+    .topbar{ padding: 22px 20px; }
+    .content{ padding: 40px 22px 64px; gap:44px; }
+    .profile-panel{ flex-direction:column; align-items:flex-start; }
+    .contact-grid{ grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="backdrop"></div>
+  <div class="noise"></div>
+  <div class="vignette"></div>
+
+  <!-- 상단 바: 리스트로 돌아가기 + 브랜드 로고 -->
+  <header class="topbar">
+    <a href="list.html" class="back-link">&#8592; Back</a>
+    <span class="brand">PROJECT<span>_</span>HUB</span>
+  </header>
+
+  <!-- 페이지 타이틀 -->
+  <section class="page-head">
+    <p class="page-eyebrow">Personnel File</p>
+    <h1 class="page-title">ABOUT</h1>
+    <p class="page-sub">프로필 콘텐츠는 준비 중입니다 — 아래 항목에 실제 정보를 채워 넣으세요.</p>
+  </section>
+
+  <main class="content">
+
+    <!-- 프로필 -->
+    <section>
+      <p class="section-label">Profile</p>
+      <div class="profile-panel">
+        <span class="corner tl"></span><span class="corner tr"></span>
+        <span class="corner bl"></span><span class="corner br"></span>
+
+        <div class="id-frame"><span>NO<br>IMAGE</span></div>
+
+        <div class="profile-info">
+          <h2 class="profile-name">YOUR NAME</h2>
+          <p class="profile-role">Role / Title Here</p>
+          <p class="profile-bio">
+            한 줄 소개 및 자기소개 문단이 들어갈 자리입니다. 어떤 문제를 풀어왔고,
+            어떤 강점을 가진 개발자인지 짧고 인상적으로 정리해 주세요.
+          </p>
+          <span class="profile-status"><span class="dot"></span>Profile Draft — Awaiting Content</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 기술 스택 -->
+    <section>
+      <p class="section-label">Tech Stack</p>
+      <div class="skill-grid">
+        <span class="skill-tag">SKILL_01</span>
+        <span class="skill-tag">SKILL_02</span>
+        <span class="skill-tag">SKILL_03</span>
+        <span class="skill-tag">SKILL_04</span>
+        <span class="skill-tag">SKILL_05</span>
+        <span class="skill-tag">SKILL_06</span>
+      </div>
+    </section>
+
+    <!-- 경력 / 이력 -->
+    <section>
+      <p class="section-label">Timeline</p>
+      <div class="timeline">
+        <div class="timeline-item">
+          <p class="timeline-period">YYYY.MM — YYYY.MM</p>
+          <h3 class="timeline-title">경력 / 활동 제목</h3>
+          <p class="timeline-desc">담당 역할과 주요 성과를 간단히 요약해 주세요.</p>
+        </div>
+        <div class="timeline-item">
+          <p class="timeline-period">YYYY.MM — YYYY.MM</p>
+          <h3 class="timeline-title">경력 / 활동 제목</h3>
+          <p class="timeline-desc">담당 역할과 주요 성과를 간단히 요약해 주세요.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 연락처 -->
+    <section>
+      <p class="section-label">Contact</p>
+      <div class="contact-grid">
+        <a class="contact-card" href="mailto:nsysinyung03@gmail.com">
+          <span class="contact-label">Email</span>
+          <span class="contact-value">nsysinyung03@gmail.com</span>
+        </a>
+        <div class="contact-card">
+          <span class="contact-label">GitHub</span>
+          <span class="contact-value pending">Coming Soon</span>
+        </div>
+        <div class="contact-card">
+          <span class="contact-label">LinkedIn</span>
+          <span class="contact-value pending">Coming Soon</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 리스트로 돌아가기 -->
+    <div class="cta-wrap">
+      <a href="list.html" class="cta-btn">
+        <span>View Projects</span>
+        <span>&#8594;</span>
+      </a>
+    </div>
+
+  </main>
+
+</body>
+</html>
